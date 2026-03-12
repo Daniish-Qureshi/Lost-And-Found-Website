@@ -172,7 +172,7 @@ export default function Home() {
                   <Link to={`/item/${item._id}`} style={{ flex: 1 }}>
                     {item.images?.length > 0 ? (
                       <div className="overflow-hidden" style={{ height: '200px' }}>
-                        <img src={`http://localhost:5000/uploads/${item.images[0]}`}
+                        <img src={`${item.images[0]}`}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       </div>

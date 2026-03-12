@@ -290,7 +290,7 @@ export default function AdminDashboard() {
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#0d9488,#f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontFamily: 'Syne, sans-serif', fontSize: '14px', overflow: 'hidden', flexShrink: 0 }}>
-                          {u.avatar ? <img src={`http://localhost:5000/uploads/${u.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.name?.charAt(0).toUpperCase()}
+                          {u.avatar ? <img src={`${u.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.name?.charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontFamily: 'DM Sans, sans-serif', color: '#1e293b', fontWeight: 600, fontSize: '14px' }}>{u.name}</span>
                       </div>
@@ -339,7 +339,7 @@ export default function AdminDashboard() {
             <div style={{ background: 'linear-gradient(135deg,#0a0f1e,#111827)', padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'linear-gradient(135deg,#0d9488,#f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontFamily: 'Syne, sans-serif', fontSize: '1.3rem', overflow: 'hidden' }}>
-                  {selectedUser.avatar ? <img src={`http://localhost:5000/uploads/${selectedUser.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : selectedUser.name?.charAt(0).toUpperCase()}
+                  {selectedUser.avatar ? <img src={`${selectedUser.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : selectedUser.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h2 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontSize: '1.2rem', fontWeight: 700 }}>{selectedUser.name}</h2>
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
                     <div key={item._id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f0fdfb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', overflow: 'hidden', flexShrink: 0 }}>
-                          {item.images?.length > 0 ? <img src={`http://localhost:5000/uploads/${item.images[0]}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : CATEGORY_ICONS[item.category]}
+                          {item.images?.length > 0 ? <img src={`${item.images[0]}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : CATEGORY_ICONS[item.category]}
                         </div>
                         <div>
                           <p style={{ fontFamily: 'Syne, sans-serif', color: '#1e293b', fontWeight: 700, fontSize: '14px' }}>{item.title}</p>
