@@ -1,0 +1,20 @@
+@import "tailwindcss";
+/* Light Mode Variables */
+.light-mode {
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --navbar-bg: #0a0f1e;
+}
+
+/* Dark Mode Variables */
+.dark-mode {
+  --bg-primary: #0a0f1e;
+  --bg-card: #111827;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border: #1e293b;
+  --navbar-bg: #060b14;
+}
