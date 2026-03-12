@@ -32,11 +32,10 @@ const getItemById = async (req, res) => {
   }
 }
 
-// Create Item
 const createItem = async (req, res) => {
   try {
     const { title, description, type, category, location, date } = req.body
-    const images = req.files ? req.files.map(f => f.filename) : []
+    const images = req.files ? req.files.map(f => f.path) : []
 
     const item = await Item.create({
       title, description, type, category, location, date,

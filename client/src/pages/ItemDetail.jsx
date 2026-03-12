@@ -134,7 +134,7 @@ export default function ItemDetail() {
             >
               {item.images?.length > 0 ? (
                 <img
-                  src={`http://localhost:5000/uploads/${item.images[activeImg]}`}
+                  src={`${item.images[activeImg]}`}
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />
@@ -151,7 +151,7 @@ export default function ItemDetail() {
                 {item.images.map((img, i) => (
                   <img
                     key={i}
-                    src={`http://localhost:5000/uploads/${img}`}
+                    src={`${img}`}
                     alt=""
                     onClick={() => setActiveImg(i)}
                     style={{
@@ -610,7 +610,7 @@ export default function ItemDetail() {
                     >
                       {match.images?.length > 0 ? (
                         <img
-                          src={`http://localhost:5000/uploads/${match.images[0]}`}
+                          src={`${match.images[0]}`}
                           alt=""
                           style={{
                             width: "100%",

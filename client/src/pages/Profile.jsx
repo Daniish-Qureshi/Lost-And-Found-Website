@@ -91,7 +91,7 @@ export default function Profile() {
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : user?.avatar ? (
-                  <img src={`http://localhost:5000/uploads/${user.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={`${user.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   user?.name?.charAt(0).toUpperCase()
                 )}
@@ -218,7 +218,7 @@ export default function Profile() {
               <div key={item._id} className="card p-5 flex gap-4 items-start" style={{ position: 'relative' }}>
                 <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#f0fdfb', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', overflow: 'hidden' }}>
                   {item.images?.length > 0 ? (
-                    <img src={`http://localhost:5000/uploads/${item.images[0]}`} alt="" className="w-full h-full object-cover" />
+                    <img src={`${item.images[0]}`} alt="" className="w-full h-full object-cover" />
                   ) : CATEGORY_ICONS[item.category]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
