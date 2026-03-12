@@ -96,18 +96,3 @@ npm run dev
 **Danish Qureshi**
 - GitHub: [@Daniish-Qureshi](https://github.com/Daniish-Qureshi)
 - Portfolio: [danish-qureshi-6ew5.vercel.app](https://danish-qureshi-6ew5.vercel.app)
-
----
-
-## 📄 License
-
-MIT License
-```
-
-GitHub pe push karo:
-```
-cd E:\lostandfound
-git add .
-git commit -m "Add README"
-git push
-```
