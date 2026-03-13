@@ -12,15 +12,16 @@ export default function Profile() {
   const { user, login, token } = useAuth()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editMode, setEditMode] = useState(false)
-  const [form, setForm] = useState({ name: '', phone: '' })
-  const [avatar, setAvatar] = useState(null)
-  const [avatarPreview, setAvatarPreview] = useState(null)
-  const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  // Password Change State
+  const [showPassSection, setShowPassSection] = useState(false)
+  const [passForm, setPassForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [passLoading, setPassLoading] = useState(false)
+  const [passMsg, setPassMsg] = useState({ type: '', text: '' })
+  const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false })
+
   useEffect(() => {
-    if (user) setForm({ name: user.name || '', phone: user.phone || '' })
     const fetchMyItems = async () => {
       try {
         const res = await api.get('/items')
@@ -31,33 +32,30 @@ export default function Profile() {
     fetchMyItems()
   }, [])
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setAvatar(file)
-      setAvatarPreview(URL.createObjectURL(file))
+  const handleChangePassword = async () => {
+    setPassMsg({ type: '', text: '' })
+    if (!passForm.currentPassword || !passForm.newPassword || !passForm.confirmPassword) {
+      return setPassMsg({ type: 'error', text: 'Sab fields fill karo!' })
     }
-  }
-
-  const handleSaveProfile = async () => {
-    setSaving(true)
+    if (passForm.newPassword.length < 6) {
+      return setPassMsg({ type: 'error', text: 'New password kam se kam 6 characters ka hona chahiye!' })
+    }
+    if (passForm.newPassword !== passForm.confirmPassword) {
+      return setPassMsg({ type: 'error', text: 'New password aur confirm password match nahi kar rahe!' })
+    }
+    setPassLoading(true)
     try {
-      const formData = new FormData()
-      formData.append('name', form.name)
-      formData.append('phone', form.phone)
-      if (avatar) formData.append('avatar', avatar)
-
-      const res = await api.put('/users/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      await api.put('/auth/change-password', {
+        currentPassword: passForm.currentPassword,
+        newPassword: passForm.newPassword
       })
-      login(res.data, token)
-      setSaveSuccess(true)
-      setEditMode(false)
-      setTimeout(() => setSaveSuccess(false), 3000)
+      setPassMsg({ type: 'success', text: '✅ Password change ho gaya!' })
+      setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setTimeout(() => { setPassMsg({ type: '', text: '' }); setShowPassSection(false) }, 3000)
     } catch (err) {
-      alert(err.response?.data?.message || 'Update nahi hua')
+      setPassMsg({ type: 'error', text: err.response?.data?.message || 'Password change nahi hua, dobara try karo!' })
     }
-    setSaving(false)
+    setPassLoading(false)
   }
 
   const lostCount = items.filter(i => i.type === 'lost').length
@@ -69,12 +67,6 @@ export default function Profile() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0a0f1e, #111827)' }} className="px-4 py-12">
         <div className="max-w-4xl mx-auto">
-
-          {saveSuccess && (
-            <div style={{ background: 'rgba(13,148,136,0.2)', border: '1px solid #0d9488', color: '#0d9488', borderRadius: '12px', padding: '12px 20px', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>
-              ✅ Profile update ho gaya!
-            </div>
-          )}
 
           <div className="flex items-start gap-6 flex-wrap">
             {/* Avatar */}
@@ -88,80 +80,123 @@ export default function Profile() {
                 boxShadow: '0 8px 25px rgba(13,148,136,0.4)',
                 overflow: 'hidden'
               }}>
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : user?.avatar ? (
+                {user?.avatar ? (
                   <img src={`${user.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   user?.name?.charAt(0).toUpperCase()
                 )}
               </div>
-              {editMode && (
-                <label style={{
-                  position: 'absolute', bottom: 0, right: 0,
-                  background: '#0d9488', borderRadius: '50%',
-                  width: '28px', height: '28px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', border: '2px solid #0a0f1e'
-                }}>
-                  <span style={{ fontSize: '14px' }}>📷</span>
-                  <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-                </label>
-              )}
             </div>
 
             {/* Info */}
             <div style={{ flex: 1 }}>
-              {editMode ? (
-                <div className="space-y-3">
-                  <div>
-                    <label style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', fontWeight: 600 }} className="block mb-1 uppercase tracking-wider">Name</label>
-                    <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                      style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', padding: '10px 14px', fontFamily: 'DM Sans, sans-serif', width: '100%', outline: 'none' }} />
-                  </div>
-                  <div>
-                    <label style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', fontWeight: 600 }} className="block mb-1 uppercase tracking-wider">Phone</label>
-                    <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                      placeholder="+91 XXXXX XXXXX"
-                      style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', padding: '10px 14px', fontFamily: 'DM Sans, sans-serif', width: '100%', outline: 'none' }} />
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={handleSaveProfile} disabled={saving}
-                      style={{ background: 'linear-gradient(135deg,#0d9488,#0f766e)', color: 'white', borderRadius: '10px', padding: '10px 24px', fontFamily: 'Syne, sans-serif', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '14px' }}>
-                      {saving ? '⏳ Saving...' : '💾 Save'}
-                    </button>
-                    <button onClick={() => { setEditMode(false); setAvatarPreview(null) }}
-                      style={{ background: 'rgba(255,255,255,0.1)', color: '#94a3b8', borderRadius: '10px', padding: '10px 20px', fontFamily: 'Syne, sans-serif', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '14px' }}>
-                      Cancel
+              <h1 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontSize: '1.8rem', fontWeight: 800 }}>
+                {user?.name}
+              </h1>
+              <p style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', marginBottom: '4px' }}>{user?.email}</p>
+              {user?.phone && <p style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '8px' }}>📞 {user.phone}</p>}
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                <span style={{
+                  background: user?.role === 'admin' ? 'rgba(245,158,11,0.2)' : 'rgba(13,148,136,0.2)',
+                  color: user?.role === 'admin' ? '#f59e0b' : '#0d9488',
+                  border: `1px solid ${user?.role === 'admin' ? 'rgba(245,158,11,0.4)' : 'rgba(13,148,136,0.4)'}`,
+                  borderRadius: '20px', padding: '2px 12px',
+                  fontSize: '12px', fontFamily: 'Syne, sans-serif', fontWeight: 600
+                }}>
+                  {user?.role === 'admin' ? '⚡ Admin' : '👤 User'}
+                </span>
+                <button onClick={() => { setShowPassSection(!showPassSection); setPassMsg({ type: '', text: '' }) }}
+                  style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '20px', padding: '2px 14px', fontSize: '12px', fontFamily: 'Syne, sans-serif', fontWeight: 600, cursor: 'pointer' }}>
+                  🔒 Change Password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Password Change Section */}
+          {showPassSection && (
+            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px', marginTop: '24px' }}>
+              <h3 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontWeight: 700, fontSize: '1rem', marginBottom: '16px' }}>
+                🔒 Change Password
+              </h3>
+
+              {passMsg.text && (
+                <div style={{
+                  background: passMsg.type === 'success' ? 'rgba(13,148,136,0.2)' : 'rgba(239,68,68,0.2)',
+                  border: `1px solid ${passMsg.type === 'success' ? '#0d9488' : '#ef4444'}`,
+                  color: passMsg.type === 'success' ? '#0d9488' : '#ef4444',
+                  borderRadius: '10px', padding: '10px 16px',
+                  fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '16px'
+                }}>
+                  {passMsg.text}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', fontWeight: 600 }} className="block mb-1 uppercase tracking-wider">Current Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPass.current ? 'text' : 'password'}
+                      value={passForm.currentPassword}
+                      onChange={e => setPassForm({ ...passForm, currentPassword: e.target.value })}
+                      placeholder="Current password dalho"
+                      style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', padding: '10px 40px 10px 14px', fontFamily: 'DM Sans, sans-serif', width: '100%', outline: 'none' }}
+                    />
+                    <button onClick={() => setShowPass({ ...showPass, current: !showPass.current })}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
+                      {showPass.current ? '🙈' : '👁️'}
                     </button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  <h1 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontSize: '1.8rem', fontWeight: 800 }}>
-                    {user?.name}
-                  </h1>
-                  <p style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', marginBottom: '4px' }}>{user?.email}</p>
-                  {user?.phone && <p style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '8px' }}>📞 {user.phone}</p>}
-                  <div className="flex items-center gap-3 mt-2">
-                    <span style={{
-                      background: user?.role === 'admin' ? 'rgba(245,158,11,0.2)' : 'rgba(13,148,136,0.2)',
-                      color: user?.role === 'admin' ? '#f59e0b' : '#0d9488',
-                      border: `1px solid ${user?.role === 'admin' ? 'rgba(245,158,11,0.4)' : 'rgba(13,148,136,0.4)'}`,
-                      borderRadius: '20px', padding: '2px 12px',
-                      fontSize: '12px', fontFamily: 'Syne, sans-serif', fontWeight: 600
-                    }}>
-                      {user?.role === 'admin' ? '⚡ Admin' : '👤 User'}
-                    </span>
-                    <button onClick={() => setEditMode(true)}
-                      style={{ background: 'rgba(13,148,136,0.15)', color: '#0d9488', border: '1px solid rgba(13,148,136,0.3)', borderRadius: '20px', padding: '2px 14px', fontSize: '12px', fontFamily: 'Syne, sans-serif', fontWeight: 600, cursor: 'pointer' }}>
-                      ✏️ Edit Profile
+
+                <div>
+                  <label style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', fontWeight: 600 }} className="block mb-1 uppercase tracking-wider">New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPass.new ? 'text' : 'password'}
+                      value={passForm.newPassword}
+                      onChange={e => setPassForm({ ...passForm, newPassword: e.target.value })}
+                      placeholder="Naya password (min 6 characters)"
+                      style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', padding: '10px 40px 10px 14px', fontFamily: 'DM Sans, sans-serif', width: '100%', outline: 'none' }}
+                    />
+                    <button onClick={() => setShowPass({ ...showPass, new: !showPass.new })}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
+                      {showPass.new ? '🙈' : '👁️'}
                     </button>
                   </div>
-                </>
-              )}
+                </div>
+
+                <div>
+                  <label style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px', fontWeight: 600 }} className="block mb-1 uppercase tracking-wider">Confirm New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPass.confirm ? 'text' : 'password'}
+                      value={passForm.confirmPassword}
+                      onChange={e => setPassForm({ ...passForm, confirmPassword: e.target.value })}
+                      placeholder="Password confirm karo"
+                      style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: 'white', padding: '10px 40px 10px 14px', fontFamily: 'DM Sans, sans-serif', width: '100%', outline: 'none' }}
+                    />
+                    <button onClick={() => setShowPass({ ...showPass, confirm: !showPass.confirm })}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>
+                      {showPass.confirm ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button onClick={handleChangePassword} disabled={passLoading}
+                    style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white', borderRadius: '10px', padding: '10px 24px', fontFamily: 'Syne, sans-serif', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '14px', opacity: passLoading ? 0.7 : 1 }}>
+                    {passLoading ? '⏳ Changing...' : '🔒 Change Password'}
+                  </button>
+                  <button onClick={() => { setShowPassSection(false); setPassMsg({ type: '', text: '' }); setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' }) }}
+                    style={{ background: 'rgba(255,255,255,0.1)', color: '#94a3b8', borderRadius: '10px', padding: '10px 20px', fontFamily: 'Syne, sans-serif', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: '14px' }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

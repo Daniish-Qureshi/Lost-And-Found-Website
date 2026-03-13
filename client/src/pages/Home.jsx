@@ -44,42 +44,42 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen" style={{ background: '#f8fafc', overflowX: 'hidden' }}>
 
       {/* Hero Section */}
-      <div style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 50%, #0d2f2b 100%)' }} className="px-4 py-16">
+      <div style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 50%, #0d2f2b 100%)' }} className="px-4 py-12">
         <div className="max-w-4xl mx-auto text-center">
           <div style={{ display: 'inline-block', background: 'rgba(13,148,136,0.15)', border: '1px solid rgba(13,148,136,0.3)', borderRadius: '100px', padding: '6px 16px', marginBottom: '20px' }}>
             <span style={{ color: '#0d9488', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500 }}>
               🌟 Community Lost & Found Platform
             </span>
           </div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontSize: '3.2rem', fontWeight: 800, lineHeight: 1.15, marginBottom: '16px' }}>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', color: 'white', fontWeight: 800, lineHeight: 1.15, marginBottom: '16px', fontSize: 'clamp(1.8rem, 6vw, 3.2rem)' }}>
             Lost Something?<br />
             <span style={{ color: '#0d9488' }}>We'll Help You Find It.</span>
           </h1>
-          <p style={{ color: '#94a3b8', fontFamily: 'DM Sans, sans-serif', fontSize: '1.1rem', marginBottom: '32px' }}>
+          <p style={{ color: '#94a3b8', fontFamily: 'DM Sans, sans-serif', fontSize: '1rem', marginBottom: '32px', padding: '0 8px' }}>
             Report lost or found items and connect with your community instantly
           </p>
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex gap-3 justify-center flex-wrap px-2">
             <Link to="/create"
               style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', fontFamily: 'Syne, sans-serif', boxShadow: '0 8px 25px rgba(239,68,68,0.35)', borderRadius: '12px' }}
-              className="text-white px-8 py-4 font-bold text-base hover:opacity-90 transition">
+              className="text-white px-6 py-3 font-bold text-sm hover:opacity-90 transition">
               ❌ Report Lost Item
             </Link>
             <Link to="/create"
               style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)', fontFamily: 'Syne, sans-serif', boxShadow: '0 8px 25px rgba(13,148,136,0.35)', borderRadius: '12px' }}
-              className="text-white px-8 py-4 font-bold text-base hover:opacity-90 transition">
+              className="text-white px-6 py-3 font-bold text-sm hover:opacity-90 transition">
               ✅ Report Found Item
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="flex justify-center gap-12 mt-12">
+          <div className="flex justify-center gap-8 mt-10">
             {[['24/7', 'Available'], ['Free', 'To Use'], ['Secure', 'Platform']].map(([val, label]) => (
               <div key={label} className="text-center">
-                <div style={{ fontFamily: 'Syne, sans-serif', color: '#0d9488', fontSize: '1.5rem', fontWeight: 800 }}>{val}</div>
-                <div style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '13px' }}>{label}</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', color: '#0d9488', fontSize: '1.3rem', fontWeight: 800 }}>{val}</div>
+                <div style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif', fontSize: '12px' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -90,19 +90,19 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex gap-3 mb-6">
+        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
           <input type="text"
             style={{ border: '2px solid #e2e8f0', borderRadius: '14px', fontFamily: 'DM Sans, sans-serif', fontSize: '15px' }}
-            className="flex-1 px-5 py-4 focus:outline-none bg-white text-gray-800"
+            className="flex-1 px-4 py-3 focus:outline-none bg-white text-gray-800"
             onFocus={e => e.target.style.borderColor = '#0d9488'}
             onBlur={e => e.target.style.borderColor = '#e2e8f0'}
-            placeholder="🔍  Search lost or found items..."
+            placeholder="🔍  Search items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <button type="submit"
             style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)', fontFamily: 'Syne, sans-serif', borderRadius: '14px', boxShadow: '0 4px 15px rgba(13,148,136,0.3)' }}
-            className="text-white px-8 py-4 font-bold hover:opacity-90 transition whitespace-nowrap">
+            className="text-white px-5 py-3 font-bold hover:opacity-90 transition whitespace-nowrap text-sm">
             Search
           </button>
         </form>
@@ -216,7 +216,7 @@ export default function Home() {
                     </div>
                   </Link>
 
-                  {/* Chat Button — only for other users */}
+                  {/* Chat Button */}
                   {user && item.user?._id !== user?._id && (
                     <div style={{ padding: '0 16px 16px' }}>
                       <Link to={`/chat/${item.user?._id}`}
@@ -233,7 +233,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Own item badge */}
                   {user && item.user?._id === user?._id && (
                     <div style={{ padding: '0 16px 16px' }}>
                       <div style={{
@@ -247,7 +246,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Not logged in */}
                   {!user && (
                     <div style={{ padding: '0 16px 16px' }}>
                       <button onClick={() => navigate('/login')}

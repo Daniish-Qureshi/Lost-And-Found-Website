@@ -9,7 +9,7 @@ router.put('/profile', protect, upload.single('avatar'), async (req, res) => {
   try {
     const { name, phone } = req.body
     const updateData = { name, phone }
-    if (req.file) updateData.avatar = req.file.filename
+    if (req.file) updateData.avatar = req.file.path
 
     const user = await User.findByIdAndUpdate(req.user._id, updateData, { new: true }).select('-password')
     res.json(user)
