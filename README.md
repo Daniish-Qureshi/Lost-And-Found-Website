@@ -2,7 +2,7 @@
 
 A full-stack community platform to report lost and found items, connect with people, and reunite belongings with their owners.
 
-🌐 **Live Demo**: [lost-and-found-website-six.vercel.app](https://lost-and-found-website-six.vercel.app)
+🌐 **Live Demo**: [Lost & Found](https://lost-and-found-website-six.vercel.app)
 
 ---
 
