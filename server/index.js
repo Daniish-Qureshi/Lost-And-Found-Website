@@ -1,9 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
+const prisma = require('./config/prisma');
 
 dotenv.config();
 
@@ -22,10 +22,10 @@ app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// MongoDB Connect
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected!'))
-  .catch((err) => console.log('❌ MongoDB Error:', err));
+// PostgreSQL Connect Test
+prisma.$connect()
+  .then(() => console.log('✅ PostgreSQL Connected!'))
+  .catch((err) => console.log('❌ DB Error:', err));
 
 // Test Route
 app.get('/', (req, res) => {

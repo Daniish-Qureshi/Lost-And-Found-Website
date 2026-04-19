@@ -459,7 +459,7 @@ export default function ItemDetail() {
             {/* Chat Button */}
             {user && !isOwner && (
               <Link
-                to={`/chat/${item.user?._id}`}
+               to={`/chat/${item.user?._id}/${item._id}`}
                 style={{
                   background: "#0a0f1e",
                   fontFamily: "Syne, sans-serif",

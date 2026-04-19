@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const prisma = require('../config/prisma');
 
 const protect = async (req, res, next) => {
   try {
@@ -7,7 +7,15 @@ const protect = async (req, res, next) => {
     if (!token) return res.status(401).json({ message: 'Not authorized' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select('-password');
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true, name: true, email: true, role: true, avatar: true, phone: true }
+    });
+
+    if (!user) return res.status(401).json({ message: 'User nahi mila' });
+
+    // _id isliye rakha hai taaki frontend break na ho
+    req.user = { ...user, _id: user.id };
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token invalid' });

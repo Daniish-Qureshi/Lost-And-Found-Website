@@ -1,35 +1,44 @@
-const Message = require('../models/Message');
-const Notification = require('../models/Notification');
+const prisma = require('../config/prisma');
 
 const socketHandler = (io) => {
   const onlineUsers = new Map();
 
   io.on('connection', (socket) => {
-    console.log('🟢 User connected:', socket.id);
+    console.log('🟢 Connected:', socket.id);
 
-    // User join
+    // Join
     socket.on('join', (userId) => {
       onlineUsers.set(userId, socket.id);
+      socket.join(userId);
       io.emit('onlineUsers', Array.from(onlineUsers.keys()));
-      console.log('User joined:', userId);
+      console.log('User joined:', userId, '| Socket:', socket.id);
     });
 
-    // Send message
+    // Send Message
     socket.on('sendMessage', async (data) => {
       try {
-        const message = await Message.create({
-          sender: data.senderId,
-          receiver: data.receiverId,
-          message: data.message,
+        const { senderId, receiverId, message } = data;
+        if (!senderId || !receiverId || !message) return;
+
+        const newMessage = await prisma.message.create({
+          data: { senderId, receiverId, message }
         });
 
-        const receiverSocket = onlineUsers.get(data.receiverId);
-        if (receiverSocket) {
-          io.to(receiverSocket).emit('receiveMessage', message);
+        const finalMsg = { ...newMessage, _id: newMessage.id };
+
+        // Receiver ka socket ID map se nikalo
+        const receiverSocketId = onlineUsers.get(receiverId);
+        console.log('Sending to receiver:', receiverId, '| Socket ID:', receiverSocketId);
+
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit('receiveMessage', finalMsg);
         }
-        socket.emit('receiveMessage', message);
-      } catch (error) {
-        console.log('Message error:', error);
+
+        // Sender ko bhi bhejo (apna message screen pe dikhane ke liye)
+        socket.emit('receiveMessage', finalMsg);
+
+      } catch (err) {
+        console.error('Socket Error:', err);
       }
     });
 
@@ -50,7 +59,7 @@ const socketHandler = (io) => {
         if (socketId === socket.id) onlineUsers.delete(userId);
       });
       io.emit('onlineUsers', Array.from(onlineUsers.keys()));
-      console.log('🔴 User disconnected:', socket.id);
+      console.log('🔴 Disconnected:', socket.id);
     });
   });
 };

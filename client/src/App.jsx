@@ -49,7 +49,8 @@ function App() {
           <Route path="/edit/:id" element={<PrivateRoute><EditItem /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
-          <Route path="/chat/:userId" element={<PrivateRoute><Chat /></PrivateRoute>} />
+<Route path="/chat/:userId" element={<PrivateRoute><Chat /></PrivateRoute>} />
+<Route path="/chat/:userId/:itemId" element={<PrivateRoute><Chat /></PrivateRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
       </main>

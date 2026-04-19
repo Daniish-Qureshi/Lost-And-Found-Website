@@ -1,35 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const Message = require('../models/Message');
+const prisma = require('../config/prisma');
 const { protect } = require('../middleware/auth');
 
-// Get conversation between two users
-router.get('/:userId', protect, async (req, res) => {
+// Get all conversations
+router.get('/', protect, async (req, res) => {
   try {
-    const messages = await Message.find({
-      $or: [
-        { sender: req.user._id, receiver: req.params.userId },
-        { sender: req.params.userId, receiver: req.user._id }
-      ]
-    }).sort({ createdAt: 1 });
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: req.user.id },
+          { receiverId: req.user.id }
+        ]
+      },
+      include: {
+        sender: { select: { id: true, name: true, email: true } },
+        receiver: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
-    res.json(messages);
+    const mapped = messages.map(m => ({
+      ...m,
+      _id: m.id,
+      sender: m.sender ? { ...m.sender, _id: m.sender.id } : null,
+      receiver: m.receiver ? { ...m.receiver, _id: m.receiver.id } : null,
+    }));
+
+    res.json(mapped);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Get all conversations
-router.get('/', protect, async (req, res) => {
+// Get messages between two users (with optional itemId filter)
+router.get('/:receiverId', protect, async (req, res) => {
   try {
-    const messages = await Message.find({
-      $or: [{ sender: req.user._id }, { receiver: req.user._id }]
-    })
-      .populate('sender', 'name')
-      .populate('receiver', 'name')
-      .sort({ createdAt: -1 });
+    const { itemId } = req.query;
+    const where = {
+      OR: [
+        { senderId: req.user.id, receiverId: req.params.receiverId },
+        { senderId: req.params.receiverId, receiverId: req.user.id }
+      ]
+    };
+    if (itemId) where.itemId = itemId;
 
-    res.json(messages);
+    const messages = await prisma.message.findMany({
+      where,
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json(messages.map(m => ({ ...m, _id: m.id })));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

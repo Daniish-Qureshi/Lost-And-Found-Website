@@ -1,62 +1,75 @@
-const express = require('express')
-const router = express.Router()
-const User = require('../models/User')
-const { protect } = require('../middleware/auth')
-const upload = require('../middleware/upload')
+const express = require('express');
+const router = express.Router();
+const prisma = require('../config/prisma');
+const { protect, adminOnly } = require('../middleware/auth');
+const upload = require('../middleware/upload');
+
+// Get all users (Admin)
+router.get('/', protect, adminOnly, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(users.map(u => ({ ...u, _id: u.id })));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Update Profile
 router.put('/profile', protect, upload.single('avatar'), async (req, res) => {
   try {
-    const { name, phone } = req.body
-    const updateData = { name, phone }
-    if (req.file) updateData.avatar = req.file.path
+    const { name, phone } = req.body;
+    const updateData = { name, phone };
+    if (req.file) updateData.avatar = req.file.path;
 
-    const user = await User.findByIdAndUpdate(req.user._id, updateData, { new: true }).select('-password')
-    res.json(user)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      select: { id: true, name: true, email: true, role: true, avatar: true, phone: true }
+    });
+
+    res.json({ ...user, _id: user.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
-// Get all users (admin)
-router.get('/', protect, async (req, res) => {
-  try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 })
-    res.json(users)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-// Get single user (admin)
+// Get single user
 router.get('/:id', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password')
-    if (!user) return res.status(404).json({ message: 'User nahi mila' })
-    res.json(user)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, email: true, role: true, avatar: true, phone: true }
+    });
+    if (!user) return res.status(404).json({ message: 'User nahi mila' });
+    res.json({ ...user, _id: user.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
-// Update user role (admin)
-router.put('/:id', protect, async (req, res) => {
+// Update user role (Admin)
+router.put('/:id', protect, adminOnly, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password')
-    res.json(user)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: req.body
+    });
+    res.json({ ...user, _id: user.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
-// Delete user (admin)
-router.delete('/:id', protect, async (req, res) => {
+// Delete user (Admin)
+router.delete('/:id', protect, adminOnly, async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id)
-    res.json({ message: 'User delete ho gaya' })
-  } catch (err) {
-    res.status(500).json({ message: err.message })
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.json({ message: 'User delete ho gaya' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-})
+});
 
-module.exports = router
+module.exports = router;

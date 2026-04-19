@@ -1,78 +1,94 @@
-const Claim = require('../models/Claim')
-const Item = require('../models/Item')
-const Notification = require('../models/Notification')
+const prisma = require('../config/prisma');
 
 const createClaim = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.itemId).populate('user')
-    if (!item) return res.status(404).json({ message: 'Item nahi mila' })
+    const item = await prisma.item.findUnique({
+      where: { id: req.params.itemId },
+      include: { user: true }
+    });
+    if (!item) return res.status(404).json({ message: 'Item nahi mila' });
 
-    if (item.user._id.toString() === req.user._id.toString())
-      return res.status(400).json({ message: 'Apna khud ka item claim nahi kar sakte' })
+    if (item.userId === req.user.id)
+      return res.status(400).json({ message: 'Apna khud ka item claim nahi kar sakte' });
 
-    const claim = await Claim.create({
-      item: req.params.itemId,
-      claimant: req.user._id,
-      description: req.body.description,
-    })
-
-    item.claims.push(claim._id)
-    await item.save()
+    const claim = await prisma.claim.create({
+      data: {
+        itemId: req.params.itemId,
+        claimantId: req.user.id,
+        description: req.body.description,
+      }
+    });
 
     // Notification to item owner
-    await Notification.create({
-      recipient: item.user._id,
-      sender: req.user._id,
-      type: 'claim',
-      message: `${req.user.name} ne tumhara item "${item.title}" claim kiya hai`,
-      item: item._id,
-    })
+    await prisma.notification.create({
+      data: {
+        recipientId: item.userId,
+        senderId: req.user.id,
+        type: 'claim',
+        message: `${req.user.name} ne tumhara item "${item.title}" claim kiya hai`,
+        itemId: item.id,
+      }
+    });
 
-    res.status(201).json(claim)
+    res.status(201).json({ ...claim, _id: claim.id });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
 const getClaims = async (req, res) => {
   try {
-    const claims = await Claim.find()
-      .populate('item', 'title type')
-      .populate('claimant', 'name email')
-      .sort({ createdAt: -1 })
-    res.json(claims)
+    const claims = await prisma.claim.findMany({
+      include: {
+        item: { select: { id: true, title: true, type: true } },
+        claimant: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    const mapped = claims.map(c => ({
+      ...c, _id: c.id,
+      item: { ...c.item, _id: c.item.id },
+      claimant: { ...c.claimant, _id: c.claimant.id }
+    }));
+    res.json(mapped);
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
 const updateClaim = async (req, res) => {
   try {
-    const claim = await Claim.findById(req.params.id).populate('item')
-    if (!claim) return res.status(404).json({ message: 'Claim nahi mila' })
+    const claim = await prisma.claim.findUnique({
+      where: { id: req.params.id },
+      include: { item: true }
+    });
+    if (!claim) return res.status(404).json({ message: 'Claim nahi mila' });
 
-    claim.status = req.body.status
-    await claim.save()
+    const updated = await prisma.claim.update({
+      where: { id: req.params.id },
+      data: { status: req.body.status }
+    });
 
     if (req.body.status === 'approved') {
-      await Item.findByIdAndUpdate(claim.item._id, { status: 'claimed' })
+      await prisma.item.update({ where: { id: claim.itemId }, data: { status: 'claimed' } });
     }
 
-    // Notify claimant
-    await Notification.create({
-      recipient: claim.claimant,
-      sender: req.user._id,
-      type: req.body.status === 'approved' ? 'claim_approved' : 'claim_rejected',
-      message: req.body.status === 'approved'
-        ? `🎉 Tumhara claim "${claim.item?.title}" approve ho gaya!`
-        : `❌ Tumhara claim "${claim.item?.title}" reject ho gaya`,
-      item: claim.item._id,
-    })
+    await prisma.notification.create({
+      data: {
+        recipientId: claim.claimantId,
+        senderId: req.user.id,
+        type: req.body.status === 'approved' ? 'claim_approved' : 'claim_rejected',
+        message: req.body.status === 'approved'
+          ? `🎉 Tumhara claim "${claim.item?.title}" approve ho gaya!`
+          : `❌ Tumhara claim "${claim.item?.title}" reject ho gaya`,
+        itemId: claim.itemId,
+      }
+    });
 
-    res.json(claim)
+    res.json({ ...updated, _id: updated.id });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-module.exports = { createClaim, getClaims, updateClaim }
+module.exports = { createClaim, getClaims, updateClaim };
