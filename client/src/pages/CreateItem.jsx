@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import api from '../utils/api'
 
 const CATEGORIES = ['Electronics', 'Documents', 'Accessories', 'Clothing', 'Books', 'Sports', 'Keys', 'Wallet', 'Other']
-
 const CATEGORY_ICONS = {
   Electronics: '📱', Documents: '📄', Accessories: '💍',
   Clothing: '👕', Books: '📚', Sports: '⚽', Keys: '🔑', Wallet: '👛', Other: '📦'
+}
+
+const badWords = [
+  'fuck', 'shit', 'bitch', 'bastard', 'chutiya', 'madarchod',
+  'bhenchod', 'harami', 'kutta', 'kamina', 'randi', 'gaandu', 'lund', 'gand', 'bhosdike'
+]
+const containsBadWord = (text) => {
+  if (!text) return false
+  return badWords.some(word => text.toLowerCase().includes(word))
 }
 
 export default function CreateItem() {
@@ -21,15 +29,33 @@ export default function CreateItem() {
   const [error, setError] = useState('')
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files)
+    const files = Array.from(e.target.files).slice(0, 3)
+    if (files.length < 1) return setError('Kam se kam 1 image upload karo!')
+    setError('')
     setImages(files)
     setPreviews(files.map(f => URL.createObjectURL(f)))
   }
 
+  const removeImage = (index) => {
+    const newImages = images.filter((_, i) => i !== index)
+    const newPreviews = previews.filter((_, i) => i !== index)
+    setImages(newImages)
+    setPreviews(newPreviews)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+
+    if (form.title.trim().length < 3) return setError('Title kam se kam 3 characters ka hona chahiye!')
+    if (form.title.length > 100) return setError('Title 100 characters se zyada nahi ho sakta!')
+    if (form.description.trim().length < 10) return setError('Description kam se kam 10 characters ka hona chahiye!')
+    if (form.description.length > 500) return setError('Description 500 characters se zyada nahi ho sakta!')
+    if (containsBadWord(form.title) || containsBadWord(form.description))
+      return setError('Inappropriate words hain. Please sahi language use karo.')
+    if (images.length < 1) return setError('Kam se kam 1 image upload karo!')
+
+    setLoading(true)
     try {
       const formData = new FormData()
       Object.keys(form).forEach(key => formData.append(key, form[key]))
@@ -48,16 +74,13 @@ export default function CreateItem() {
     <div className="min-h-screen" style={{ background: '#f8fafc' }}>
       <div className="max-w-2xl mx-auto px-4 py-10">
 
-        {/* Header */}
         <div className="mb-8">
-          <h1 style={{ fontFamily: 'Syne, sans-serif', color: '#0a0f1e' }}
-            className="text-4xl font-bold mb-2">Report an Item</h1>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', color: '#0a0f1e' }} className="text-4xl font-bold mb-2">Report an Item</h1>
           <p style={{ color: '#64748b' }}>Fill in the details below to report a lost or found item</p>
         </div>
 
         {error && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}
-            className="p-4 rounded-xl mb-6 text-sm">
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }} className="p-4 rounded-xl mb-6 text-sm">
             ⚠️ {error}
           </div>
         )}
@@ -66,28 +89,15 @@ export default function CreateItem() {
 
           {/* Lost / Found Toggle */}
           <div className="mb-6">
-            <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-              className="block mb-3 uppercase tracking-wider">Item Type</label>
+            <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="block mb-3 uppercase tracking-wider">Item Type</label>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setForm({ ...form, type: 'lost' })}
-                style={{
-                  background: form.type === 'lost' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : '#f8fafc',
-                  border: form.type === 'lost' ? 'none' : '2px solid #e2e8f0',
-                  color: form.type === 'lost' ? 'white' : '#64748b',
-                  fontFamily: 'Syne, sans-serif',
-                  boxShadow: form.type === 'lost' ? '0 4px 20px rgba(239,68,68,0.3)' : 'none'
-                }}
+                style={{ background: form.type === 'lost' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : '#f8fafc', border: form.type === 'lost' ? 'none' : '2px solid #e2e8f0', color: form.type === 'lost' ? 'white' : '#64748b', fontFamily: 'Syne, sans-serif', boxShadow: form.type === 'lost' ? '0 4px 20px rgba(239,68,68,0.3)' : 'none' }}
                 className="py-4 rounded-xl font-semibold text-sm transition-all duration-200">
                 ❌ Lost Item
               </button>
               <button type="button" onClick={() => setForm({ ...form, type: 'found' })}
-                style={{
-                  background: form.type === 'found' ? 'linear-gradient(135deg, #0d9488, #0f766e)' : '#f8fafc',
-                  border: form.type === 'found' ? 'none' : '2px solid #e2e8f0',
-                  color: form.type === 'found' ? 'white' : '#64748b',
-                  fontFamily: 'Syne, sans-serif',
-                  boxShadow: form.type === 'found' ? '0 4px 20px rgba(13,148,136,0.3)' : 'none'
-                }}
+                style={{ background: form.type === 'found' ? 'linear-gradient(135deg, #0d9488, #0f766e)' : '#f8fafc', border: form.type === 'found' ? 'none' : '2px solid #e2e8f0', color: form.type === 'found' ? 'white' : '#64748b', fontFamily: 'Syne, sans-serif', boxShadow: form.type === 'found' ? '0 4px 20px rgba(13,148,136,0.3)' : 'none' }}
                 className="py-4 rounded-xl font-semibold text-sm transition-all duration-200">
                 ✅ Found Item
               </button>
@@ -98,14 +108,17 @@ export default function CreateItem() {
 
             {/* Title */}
             <div>
-              <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                className="block mb-2 uppercase tracking-wider">Title *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="mb-2">
+                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="uppercase tracking-wider">Title *</label>
+                <span style={{ fontSize: '12px', color: form.title.length > 90 ? '#ef4444' : '#94a3b8', fontFamily: 'DM Sans, sans-serif' }}>{form.title.length}/100</span>
+              </div>
               <input type="text"
                 style={{ border: '2px solid #e2e8f0', borderRadius: '12px', fontFamily: 'DM Sans, sans-serif' }}
                 className="w-full px-4 py-3 focus:outline-none text-gray-800 bg-white"
                 onFocus={e => e.target.style.borderColor = '#0d9488'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 placeholder="e.g. Black iPhone 13 with cracked screen"
+                maxLength={100}
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required />
@@ -113,15 +126,17 @@ export default function CreateItem() {
 
             {/* Description */}
             <div>
-              <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                className="block mb-2 uppercase tracking-wider">Description *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="mb-2">
+                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="uppercase tracking-wider">Description *</label>
+                <span style={{ fontSize: '12px', color: form.description.length > 450 ? '#ef4444' : '#94a3b8', fontFamily: 'DM Sans, sans-serif' }}>{form.description.length}/500</span>
+              </div>
               <textarea
                 style={{ border: '2px solid #e2e8f0', borderRadius: '12px', fontFamily: 'DM Sans, sans-serif' }}
                 className="w-full px-4 py-3 focus:outline-none text-gray-800 bg-white resize-none"
                 onFocus={e => e.target.style.borderColor = '#0d9488'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 placeholder="Describe the item in detail — color, brand, any marks..."
-                rows={4}
+                rows={4} maxLength={500}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 required />
@@ -129,21 +144,11 @@ export default function CreateItem() {
 
             {/* Category */}
             <div>
-              <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                className="block mb-3 uppercase tracking-wider">Category *</label>
+              <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="block mb-3 uppercase tracking-wider">Category *</label>
               <div className="grid grid-cols-3 gap-2">
                 {CATEGORIES.map(cat => (
-                  <button key={cat} type="button"
-                    onClick={() => setForm({ ...form, category: cat })}
-                    style={{
-                      border: form.category === cat ? '2px solid #0d9488' : '2px solid #e2e8f0',
-                      background: form.category === cat ? '#f0fdfb' : '#f8fafc',
-                      color: form.category === cat ? '#0d9488' : '#64748b',
-                      borderRadius: '10px',
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize: '13px',
-                      fontWeight: form.category === cat ? 600 : 400,
-                    }}
+                  <button key={cat} type="button" onClick={() => setForm({ ...form, category: cat })}
+                    style={{ border: form.category === cat ? '2px solid #0d9488' : '2px solid #e2e8f0', background: form.category === cat ? '#f0fdfb' : '#f8fafc', color: form.category === cat ? '#0d9488' : '#64748b', borderRadius: '10px', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: form.category === cat ? 600 : 400 }}
                     className="py-2 px-3 transition-all">
                     {CATEGORY_ICONS[cat]} {cat}
                   </button>
@@ -154,8 +159,7 @@ export default function CreateItem() {
             {/* Location + Date */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                  className="block mb-2 uppercase tracking-wider">Location *</label>
+                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="block mb-2 uppercase tracking-wider">Location *</label>
                 <input type="text"
                   style={{ border: '2px solid #e2e8f0', borderRadius: '12px', fontFamily: 'DM Sans, sans-serif' }}
                   className="w-full px-4 py-3 focus:outline-none text-gray-800 bg-white"
@@ -167,8 +171,7 @@ export default function CreateItem() {
                   required />
               </div>
               <div>
-                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                  className="block mb-2 uppercase tracking-wider">Date *</label>
+                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="block mb-2 uppercase tracking-wider">Date *</label>
                 <input type="date"
                   style={{ border: '2px solid #e2e8f0', borderRadius: '12px', fontFamily: 'DM Sans, sans-serif' }}
                   className="w-full px-4 py-3 focus:outline-none text-gray-800 bg-white"
@@ -180,23 +183,30 @@ export default function CreateItem() {
               </div>
             </div>
 
-            {/* Images */}
+            {/* Images 1-3 */}
             <div>
-              <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }}
-                className="block mb-2 uppercase tracking-wider">Images (max 5)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="mb-2">
+                <label style={{ fontFamily: 'Syne, sans-serif', color: '#374151', fontSize: '14px', fontWeight: 600 }} className="uppercase tracking-wider">Images (1-3) *</label>
+                <span style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'DM Sans, sans-serif' }}>{images.length}/3</span>
+              </div>
               <label style={{ border: '2px dashed #cbd5e1', borderRadius: '12px', cursor: 'pointer' }}
                 className="flex flex-col items-center justify-center py-8 hover:border-teal-500 transition-colors bg-gray-50">
                 <span className="text-3xl mb-2">📷</span>
                 <span style={{ color: '#64748b', fontFamily: 'DM Sans, sans-serif' }} className="text-sm">
-                  Click to upload images
+                  Click to upload 1-3 images
                 </span>
-                <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
+                <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
               </label>
               {previews.length > 0 && (
                 <div className="flex gap-3 mt-3 flex-wrap">
                   {previews.map((p, i) => (
-                    <img key={i} src={p} alt=""
-                      className="w-20 h-20 object-cover rounded-xl shadow-md border-2 border-white" />
+                    <div key={i} style={{ position: 'relative', width: '80px' }}>
+                      <img src={p} alt="" className="w-20 h-20 object-cover rounded-xl shadow-md border-2 border-white" />
+                      <button type="button" onClick={() => removeImage(i)}
+                        style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', border: 'none', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -204,11 +214,7 @@ export default function CreateItem() {
 
             {/* Submit */}
             <button type="submit" disabled={loading}
-              style={{
-                background: loading ? '#94a3b8' : 'linear-gradient(135deg, #0d9488, #0f766e)',
-                fontFamily: 'Syne, sans-serif',
-                boxShadow: loading ? 'none' : '0 8px 25px rgba(13,148,136,0.35)'
-              }}
+              style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #0d9488, #0f766e)', fontFamily: 'Syne, sans-serif', boxShadow: loading ? 'none' : '0 8px 25px rgba(13,148,136,0.35)' }}
               className="w-full text-white py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90 disabled:cursor-not-allowed mt-2">
               {loading ? '⏳ Submitting...' : '🚀 Report Item'}
             </button>
