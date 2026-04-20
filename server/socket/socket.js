@@ -1,27 +1,18 @@
 const prisma = require('../config/prisma');
+const { Profanity, ProfanityOptions } = require('@2toad/profanity')
 
-const badWords = [
-  'fuck', 'shit', 'bitch', 'ass', 'bastard', 'damn', 'crap',
-  'chutiya', 'madarchod', 'bhenchod', 'harami', 'kutta', 'kamina',
-  'randi', 'gaandu', 'saala', 'mc', 'bc', 'lund', 'gand', 'bhosdike'
-]
-
-const filterBadWords = (text) => {
-  let filtered = text
-  badWords.forEach(word => {
-    const regex = new RegExp(word, 'gi')
-    filtered = filtered.replace(regex, '*'.repeat(word.length))
-  })
-  return filtered
-}
+const options = new ProfanityOptions()
+options.wholeWord = false
+const profanity = new Profanity(options)
+profanity.addWords(['chutiya', 'madarchod', 'bhenchod', 'harami', 'kutta', 'kamina', 'randi', 'gaandu', 'saala', 'lund', 'gand', 'bhosdike', 'mc', 'bc'])
 
 // Rate limiting for messages
 const messageRateLimit = new Map()
 const isRateLimited = (userId) => {
   const now = Date.now()
   const userMsgs = messageRateLimit.get(userId) || []
-  const recent = userMsgs.filter(t => now - t < 60000) // last 1 minute
-  if (recent.length >= 30) return true // max 30 messages per minute
+  const recent = userMsgs.filter(t => now - t < 60000)
+  if (recent.length >= 30) return true
   messageRateLimit.set(userId, [...recent, now])
   return false
 }
@@ -44,21 +35,18 @@ const socketHandler = (io) => {
         const { senderId, receiverId, message, itemId } = data;
         if (!senderId || !receiverId || !message) return;
 
-        // Rate limit check
         if (isRateLimited(senderId)) {
-          socket.emit('error', 'Bahut zyada messages bhej rahe ho! Thoda ruko.')
+          socket.emit('chatError', 'Bahut zyada messages bhej rahe ho! Thoda ruko.')
           return
         }
 
-        // Message length check
         if (message.trim().length === 0) return
         if (message.length > 500) {
-          socket.emit('error', 'Message 500 characters se zyada nahi ho sakta!')
+          socket.emit('chatError', 'Message 500 characters se zyada nahi ho sakta!')
           return
         }
 
-        // Bad words filter
-        const cleanMessage = filterBadWords(message.trim())
+        const cleanMessage = profanity.censor(message.trim())
 
         const newMessage = await prisma.message.create({
           data: { senderId, receiverId, message: cleanMessage, itemId: itemId || null }
@@ -66,13 +54,11 @@ const socketHandler = (io) => {
 
         const finalMsg = { ...newMessage, _id: newMessage.id };
 
-        // Receiver ko bhejo
         const receiverSocketId = onlineUsers.get(receiverId)
         if (receiverSocketId) {
           io.to(receiverSocketId).emit('receiveMessage', finalMsg);
         }
 
-        // Sender ko confirm
         socket.emit('receiveMessage', finalMsg);
 
       } catch (err) {
